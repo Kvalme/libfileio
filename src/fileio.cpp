@@ -1,6 +1,24 @@
+/**************************************************************************
+*   Copyright (C) 2010 by Denis A. Birukov aka Messenger of death         *
+*   denis.birukov@gmail.com                                               *
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 2 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+*   This program is distributed in the hope that it will be useful,       *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+*   GNU General Public License for more details.                          *
+*                                                                         *
+*   You should have received a copy of the GNU General Public License     *
+*   along with this program; if not, write to the                         *
+*   Free Software Foundation, Inc.,                                       *
+*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+***************************************************************************/
+
 #include "fileio.h"
-#include "logger.h"
-#include "m3derror.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -22,6 +40,8 @@ int munmap ( void *start, size_t length );
 
 namespace FileIO
 {
+#define THROW(reason, code) throw(FileIOError(reason, code))
+
 FileManager::FileManager ( unsigned int cache_size ) : _cache_size_ ( cache_size )
 {
 }
@@ -34,17 +54,14 @@ FileManager::~FileManager()
 FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MODE cache )
 {
 	File *file;
-	//Проверим кеш
+	//Check cache
 	std::map<std::string, FilePtr>::iterator cached_file = _file_cache_.find ( filename );
 	if ( cached_file != _file_cache_.end() )
 	{
-//Раскомментировать для тестирования
-		Logger::log(LOG_DEBUG)<<"FileIO: opening from cache: "<<filename<<std::endl;
 		cached_file->second->reset();
 		return cached_file->second;
 	}
-	Logger::log(LOG_DEBUG)<<"FileIO: opening file: "<<filename<<std::endl;
-	if ( _file_fabricks_.empty() ) THROW ( "No file fabricks installed" );
+	if ( _file_fabricks_.empty() ) THROW ( "No file fabricks installed", NO_FABRICKS );
 	for ( std::vector<FileFabric>::iterator it = _file_fabricks_.begin(); it != _file_fabricks_.end(); ++it )
 	{
 		file = ( *it ) ( filename, mode );
@@ -59,7 +76,7 @@ FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_
 			return fileptr;
 		}
 	}
-	THROW ( "Unable ot open file " + filename );
+	THROW ( "Unable ot open file " + filename, NO_SUCH_FILE );
 	return FilePtr ( ( File* ) 0 );
 }
 bool FileManager::clean ( int count )
@@ -116,19 +133,19 @@ File* CreatePosixFile ( const std::string &filename, READ_MODE mode )
 }
 void PosixFile::read ( void *buf, int size )
 {
-	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!" );
-	if ( _file_mode_ == WRITE_ONLY ) THROW ( "Read attemption for write-only file" );
-	if ( ::read ( _fdesc_ , buf, size ) != ( ssize_t ) size ) THROW ( "Read from " + _filename_ + ": " + strerror ( errno ) );
+	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!", INVALID_FILE );
+	if ( _file_mode_ == WRITE_ONLY ) THROW ( "Read attemption for write-only file", READ_ON_WRITE );
+	if ( ::read ( _fdesc_ , buf, size ) != ( ssize_t ) size ) THROW ( "Read from " + _filename_ + ": " + strerror ( errno ), READ_ERROR );
 }
 void PosixFile::write ( void *buf, int size )
 {
-	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!" );
-	if ( _file_mode_ == READ_ONLY ) THROW ( "Read attemption for write-only file" );
-	if ( ::write ( _fdesc_ , buf, size ) != ( ssize_t ) size ) THROW ( "Write to " + _filename_ + ": " + strerror ( errno ) );
+	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!", INVALID_FILE );
+	if ( _file_mode_ == READ_ONLY ) THROW ( "Write attemption for read-only file", WRITE_ON_READ);
+	if ( ::write ( _fdesc_ , buf, size ) != ( ssize_t ) size ) THROW ( "Write to " + _filename_ + ": " + strerror ( errno ), WRITE_ERROR );
 }
 void PosixFile::seek ( int64_t position, FILE_POSITION whence )
 {
-	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!" );
+	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!", INVALID_FILE );
 	int iwhence;
 	switch ( whence )
 	{
@@ -142,7 +159,7 @@ void PosixFile::seek ( int64_t position, FILE_POSITION whence )
 			iwhence = SEEK_SET;
 			break;
 	}
-	if ( lseek ( _fdesc_, position, iwhence ) == -1 ) THROW ( "Seek failed for file:" + _filename_ + ": " + strerror ( errno ) );
+	if ( lseek ( _fdesc_, position, iwhence ) == -1 ) THROW ( "Seek failed for file:" + _filename_ + ": " + strerror ( errno ), SEEK_ERROR );
 }
 void PosixFile::reset()
 {
@@ -150,22 +167,19 @@ void PosixFile::reset()
 }
 void* PosixFile::mmap()
 {
-	if ( _file_mode_ != READ_ONLY ) THROW ( "File mapping supported only for read-only files" );
+	if ( _file_mode_ != READ_ONLY ) THROW ( "File mapping supported only for read-only files", MAP_FOR_WRITE );
 
 	//Отмапим файл
 	_mapped_address_ = ( char* ) ::mmap ( 0, _file_size_, PROT_READ, MAP_SHARED, _fdesc_, 0 );
 	if ( _mapped_address_ == MAP_FAILED )
 	{
-		THROW ( strerror ( errno ) );
+		THROW ( strerror ( errno ), MAP_ERROR );
 	}
 	return _mapped_address_;
 }
 PosixFile::~PosixFile()
 {
-	if ( _mapped_address_ )
-	{
-		if ( munmap ( _mapped_address_, _file_size_ ) < 0 ) Logger::log ( LOG_DEBUG ) << "PosixFile: Failed to unmap file in M3D::MMAP. File size:" << _file_size_ << std::endl;
-	}
+	if ( _mapped_address_ )munmap ( _mapped_address_, _file_size_ );
 	if ( _fdesc_ >= 0 ) ::close ( _fdesc_ );
 }
 PosixFile::PosixFile ( const std::string &filename, READ_MODE mode, int fdesc ) : File ( filename, mode ), _fdesc_(fdesc), _mapped_address_(0)
@@ -173,7 +187,7 @@ PosixFile::PosixFile ( const std::string &filename, READ_MODE mode, int fdesc ) 
 	if(mode!=WRITE_ONLY)
 	{
 		struct stat file_stat;
-		if ( fstat ( _fdesc_, &file_stat ) < 0 ) THROW ( strerror ( errno ) );
+		if ( fstat ( _fdesc_, &file_stat ) < 0 ) THROW ( strerror ( errno ), INVALID_FILE );
 		_file_size_ = file_stat.st_size;
 	}
 }

@@ -22,20 +22,17 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 
 # Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS([stdint.h stdlib.h])
+AC_CHECK_HEADERS([string boost/shared_ptr.hpp boost/function.hpp vector map stdint.h sys/types.h sys/stat.h ])
+AC_CHECK_HEADERS([fcntl.h errno.h unistd.h])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_C_INLINE
-AC_TYPE_SIZE_T
-AC_C_VOLATILE
-
-# Checks for library functions.
-AC_FUNC_MALLOC
-AC_FUNC_MEMCMP
-AC_CHECK_FUNCS([memmove memset])
+case "$target" in
+    *-*-cygwin* | *-*-mingw32*)
+    AC_CHECK_HEADERS([windows.h])
+    ;;
+    *-*-linux-gnu*)
+    AC_CHECK_HEADERS([sys/mman.h])
+    ;;
+esac
 
 
 AC_OUTPUT(Makefile \

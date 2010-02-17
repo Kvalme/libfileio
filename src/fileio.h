@@ -1,3 +1,23 @@
+/**************************************************************************
+*   Copyright (C) 2010 by Denis A. Birukov aka Messenger of death         *
+*   denis.birukov@gmail.com                                               *
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 2 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+*   This program is distributed in the hope that it will be useful,       *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+*   GNU General Public License for more details.                          *
+*                                                                         *
+*   You should have received a copy of the GNU General Public License     *
+*   along with this program; if not, write to the                         *
+*   Free Software Foundation, Inc.,                                       *
+*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+***************************************************************************/
+
 #pragma once
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -32,6 +52,37 @@ class File;
 class FileManager;
 typedef boost::shared_ptr<File> FilePtr;
 typedef boost::function < File* ( const std::string &filename, READ_MODE mode ) > FileFabric;
+enum FILEIO_ERROR_CODE
+{
+	NO_FABRICKS,
+	NO_SUCH_FILE,
+	INVALID_FILE,
+	READ_ERROR,
+	READ_ON_WRITE,
+	WRITE_ERROR,
+	WRITE_ON_READ,
+	SEEK_ERROR,
+	MAP_FOR_WRITE,
+	MAP_ERROR
+};
+
+class FileIOError
+{
+	public:
+		FileIOError ( std::string reason, FILEIO_ERROR_CODE code ) : _reason_ ( reason ), _error_code_(code) {}
+		~FileIOError() {}
+		FILEIO_ERROR_CODE get_error_code() const
+		{
+			return _error_code_;
+		}
+		const char* what() const
+		{
+			return _reason_.c_str();
+		}
+	private:
+		std::string _reason_;
+		FILEIO_ERROR_CODE _error_code_;
+};
 
 class FileManager
 {
@@ -40,22 +91,23 @@ class FileManager
 		~FileManager();
 
 		/**
-		 * Производит открытие файла. Для открытия файла производится поиск по всем зарегистрированным модулям взаимодействия с файлами, в порядке их регистрации.
-		 * @param filename имя файла, который требуется открыть
-		 * @param mode режим открытия файла
-		 * @param cache режим кеширования файла
-		 * @return объект для работы с открываемым файлом
+		 * Opens a file. Searching for file name in all fileio modules in the order of module registration
+		 * @param filename file name to open
+		 * @param mode open mode
+		 * @param cache caching mode
+		 * @return object that provides access to the opened file
+		 * @author Denis A. Biryukov
 		 */
 		FilePtr open ( const std::string &filename, READ_MODE mode = READ_ONLY, CACHE_MODE cache = CACHE );
 		/**
-		 * Производит удаление из кеша указанного кол-ва файлов
-		 * @param count количество файлов, которое требуется удалить. По умолчанию производится полная очистка кеша
-		 * @return true в случае успешного выполнения операции.
+		 * Removing 'count' files from cache
+		 * @param count count of files that needs to be removed from cache. By default this function purge cache.
+		 * @return true on success operation
 		 */
 		bool clean ( int count = -1 );
 		/**
-		 * Производит регистрацию модуля взаимодействия с файлами.
-		 * @param file_manager фабрика
+		 * Register a fileio module
+		 * @param file_manager fileio module fabrick
 		 */
 		void register_fileio ( const FileFabric &file_manager );
 	private:
@@ -68,41 +120,44 @@ class File
 {
 	public:
 		/**
-		 * Производит чтение данных из файла
-		 * @param buf адрес по которому будут помещены считанные данные
-		 * @param size размер считываемых данных в байтах
+		 * Reads data from file
+		 * @param buf buffer for data
+		 * @param size amout of data to read. In bytes
 		 */
 		virtual void read ( void *buf, int size ) = 0;
 		/**
-		 * Производит запись данных в файл
-		 * @param buf адрес по которому находятся данные для записи
-		 * @param size размер записываемых данных в байтах
+		 * Writes data to file
+		 * @param buf buffer with data that needs to be written
+		 * @param size amount of data to write.In bytes
 		 */
 		virtual void write ( void *buf, int size ) = 0;
 		/**
-		 * Производит смещение в файле на указанное кол-во байт
-		 * @param position величина смещения в байтах
-		 * @param whence точка от которой задано смещение, по умолчанию - от текущей точки
+		 * Seeks in file for 'position' bites starting from 'whence'
+		 * @param position amount of bites to move
+		 * @param whence point in file from where we should move. By default - current position
 		 */
 		virtual void seek ( int64_t position, FILE_POSITION whence = POS_CUR ) = 0;
 		/**
-		 * Производит отображение файла в память
-		 * @return указатель на начало отображенной памяти
+		 * Maps file onto memory
+		 * @return pointer to the mapped area
 		 */
 		virtual void *mmap() = 0;
 		/**
-		 * Производит сброс указателей чтения/записи
+		 * Resets read/writes pointers. After this functions any read will performs from the start of file
 		 */
 		virtual void reset() = 0;
 		/**
-		 * Получение размера файла
-		 * @return размер файлами
+		 * Returns file size
+		 * @return file size
 		 */
-		virtual uint64_t get_file_size() const { return _file_size_;}
+		virtual uint64_t get_file_size() const
+		{
+			return _file_size_;
+		}
 
 		virtual ~File() {};
 	protected:
-		File ( const std::string &filename, READ_MODE mode ) : _filename_ ( filename ), _file_mode_ ( mode ), _file_size_(0) {};
+		File ( const std::string &filename, READ_MODE mode ) : _filename_ ( filename ), _file_mode_ ( mode ), _file_size_ ( 0 ) {};
 		std::string _filename_;
 		READ_MODE _file_mode_;
 		uint64_t _file_size_;
