@@ -22,15 +22,15 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 
 # Checks for header files.
-AC_CHECK_HEADERS([string boost/shared_ptr.hpp boost/function.hpp vector map stdint.h sys/types.h sys/stat.h ],,AC_MSG_ERROR([*** some of requred headers not found ***])
-AC_CHECK_HEADERS([fcntl.h errno.h unistd.h],,AC_MSG_ERROR([*** some of requred headers not found ***])
+AC_CHECK_HEADERS([string boost/shared_ptr.hpp boost/function.hpp vector map stdint.h sys/types.h sys/stat.h ],,AC_MSG_ERROR([*** some of requred headers not found ***]))
+AC_CHECK_HEADERS([fcntl.h errno.h unistd.h],,AC_MSG_ERROR([*** some of requred headers not found ***]))
 
 case "$target" in
     *-*-cygwin* | *-*-mingw32*)
-    AC_CHECK_HEADERS([windows.h],,AC_MSG_ERROR([*** some of requred headers not found ***])
+    AC_CHECK_HEADERS([windows.h],,AC_MSG_ERROR([*** some of requred headers not found ***]))
     ;;
     *-*-linux-gnu*)
-    AC_CHECK_HEADERS([sys/mman.h],,AC_MSG_ERROR([*** some of requred headers not found ***])
+    AC_CHECK_HEADERS([sys/mman.h],,AC_MSG_ERROR([*** some of requred headers not found ***]))
     ;;
 esac
 
