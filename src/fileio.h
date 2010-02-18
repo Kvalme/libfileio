@@ -123,14 +123,16 @@ class File
 		 * Reads data from file
 		 * @param buf buffer for data
 		 * @param size amout of data to read. In bytes
+		 * @return amount of bytes actually read
 		 */
-		virtual void read ( void *buf, int size ) = 0;
+		virtual int read ( void *buf, int size ) = 0;
 		/**
 		 * Writes data to file
 		 * @param buf buffer with data that needs to be written
 		 * @param size amount of data to write.In bytes
+		 * @return amount of bites actually written
 		 */
-		virtual void write ( const void *buf, int size ) = 0;
+		virtual int write ( const void *buf, int size ) = 0;
 		/**
 		 * Seeks in file for 'position' bites starting from 'whence'
 		 * @param position amount of bites to move
