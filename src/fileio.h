@@ -130,7 +130,7 @@ class File
 		 * @param buf buffer with data that needs to be written
 		 * @param size amount of data to write.In bytes
 		 */
-		virtual void write ( void *buf, int size ) = 0;
+		virtual void write ( const void *buf, int size ) = 0;
 		/**
 		 * Seeks in file for 'position' bites starting from 'whence'
 		 * @param position amount of bites to move

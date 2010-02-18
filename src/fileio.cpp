@@ -97,7 +97,7 @@ class PosixFile : public File
 {
 	public:
 		void read ( void *buf, int size );
-		void write ( void *buf, int size );
+		void write ( const void *buf, int size );
 		void seek ( int64_t position, FILE_POSITION whence = POS_CUR );
 		void reset();
 		void *mmap();
@@ -137,7 +137,7 @@ void PosixFile::read ( void *buf, int size )
 	if ( _file_mode_ == WRITE_ONLY ) THROW ( "Read attemption for write-only file", READ_ON_WRITE );
 	if ( ::read ( _fdesc_ , buf, size ) != ( ssize_t ) size ) THROW ( "Read from " + _filename_ + ": " + strerror ( errno ), READ_ERROR );
 }
-void PosixFile::write ( void *buf, int size )
+void PosixFile::write ( const void *buf, int size )
 {
 	if ( _fdesc_ < 0 ) THROW ( "Invalid file descriptor!", INVALID_FILE );
 	if ( _file_mode_ == READ_ONLY ) THROW ( "Write attemption for read-only file", WRITE_ON_READ);
