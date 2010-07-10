@@ -49,7 +49,6 @@ enum FILE_POSITION
 	POS_END
 };
 class File;
-class FileManager;
 typedef boost::shared_ptr<File> FilePtr;
 typedef boost::function < File* ( const std::string &filename, READ_MODE mode ) > FileFabric;
 enum FILEIO_ERROR_CODE
