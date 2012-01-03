@@ -15,3 +15,6 @@ SET_TARGET_PROPERTIES(fileio-static PROPERTIES PREFIX "lib")
 SET_TARGET_PROPERTIES(fileio PROPERTIES PUBLIC_HEADER ${libfileio_HEADERS})
 
 install( TARGETS fileio fileio-static LIBRARY DESTINATION lib ARCHIVE DESTINATION lib PUBLIC_HEADER DESTINATION include)
+
+add_executable(fileio_tests tests/fileio_test.cpp)
+target_link_libraries(fileio_tests fileio)

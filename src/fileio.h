@@ -20,11 +20,10 @@
 
 #pragma once
 #include <string>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
 #include <vector>
 #include <map>
 #include <stdint.h>
+#include <functional>
 
 namespace FileIO
 {
@@ -48,9 +47,6 @@ enum FILE_POSITION
 	POS_CUR,
 	POS_END
 };
-class File;
-typedef boost::shared_ptr<File> FilePtr;
-typedef boost::function < File* ( const std::string &filename, READ_MODE mode ) > FileFabric;
 enum FILEIO_ERROR_CODE
 {
 	NO_FABRICKS,
@@ -64,7 +60,12 @@ enum FILEIO_ERROR_CODE
 	MAP_FOR_WRITE,
 	MAP_ERROR
 };
-
+class File;
+class FileFabric
+{
+  public:
+    virtual File* operator()(const std::string &fname, READ_MODE mode)=0;
+};
 class FileIOError
 {
 	public:
@@ -94,10 +95,10 @@ class FileManager
 		 * @param filename file name to open
 		 * @param mode open mode
 		 * @param cache caching mode
-		 * @return object that provides access to the opened file
+		 * @return pointer to the opened file. Object should be deleted on caller side
 		 * @author Denis A. Biryukov
 		 */
-		FilePtr open ( const std::string &filename, READ_MODE mode = READ_ONLY, CACHE_MODE cache = CACHE );
+		File* open ( const std::string &filename, READ_MODE mode = READ_ONLY, CACHE_MODE cache = CACHE );
 		/**
 		 * Removing 'count' files from cache
 		 * @param count count of files that needs to be removed from cache. By default this function purge cache.
@@ -108,10 +109,10 @@ class FileManager
 		 * Register a fileio module
 		 * @param file_manager fileio module fabrick
 		 */
-		void register_fileio ( const FileFabric &file_manager );
+		void register_fileio ( FileFabric *file_manager );
 	private:
-		std::vector<FileFabric> _file_fabricks_;
-		std::map<std::string, FilePtr> _file_cache_;
+		std::vector<FileFabric*> _file_fabricks_;
+		std::map<std::string, File*> _file_cache_;
 		unsigned int _cache_size_;
 };
 
@@ -164,6 +165,11 @@ class File
 		uint64_t _file_size_;
 };
 
-File* CreatePosixFile ( const std::string& filename, READ_MODE mode );
+
+class CreatePosixFile : public FileFabric
+{
+  public:
+    virtual File* operator()(const std::string &fname, READ_MODE mode);
+};
 
 } //namespace FileIO

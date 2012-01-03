@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 #ifndef WIN32
 #include <sys/mman.h>
 #else
@@ -51,23 +52,23 @@ FileManager::~FileManager()
 	_file_cache_.clear();
 }
 
-FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MODE cache )
+File* FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MODE cache )
 {
 	File *file;
 	//Check cache
-	std::map<std::string, FilePtr>::iterator cached_file = _file_cache_.find ( filename );
+	std::map<std::string, File*>::iterator cached_file = _file_cache_.find ( filename );
 	if ( cached_file != _file_cache_.end() )
 	{
 		cached_file->second->reset();
 		return cached_file->second;
 	}
 	if ( _file_fabricks_.empty() ) THROW ( "No file fabricks installed", NO_FABRICKS );
-	for ( std::vector<FileFabric>::iterator it = _file_fabricks_.begin(); it != _file_fabricks_.end(); ++it )
+	for ( std::vector<FileFabric*>::iterator it = _file_fabricks_.begin(); it != _file_fabricks_.end(); ++it )
 	{
-		file = ( *it ) ( filename, mode );
+		file = (*it)->operator()( filename, mode );
 		if ( file )
 		{
-			FilePtr fileptr ( file );
+			File* fileptr ( file );
 			if ( cache == CACHE && _file_cache_.find ( filename ) == _file_cache_.end() )
 			{
 				if(_file_cache_.size() < _cache_size_)_file_cache_.insert ( std::make_pair ( filename, fileptr ) );
@@ -77,19 +78,19 @@ FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_
 		}
 	}
 	THROW ( "Unable ot open file " + filename, NO_SUCH_FILE );
-	return FilePtr ( ( File* ) 0 );
+	return 0;
 }
 bool FileManager::clean ( int count )
 {
 	count = ( count == -1 ) ? _file_cache_.size() : count;
-	for ( std::map<std::string, FilePtr>::iterator it = _file_cache_.begin(); it != _file_cache_.end(); )
+	for ( std::map<std::string, File*>::iterator it = _file_cache_.begin(); it != _file_cache_.end(); )
 	{
 		_file_cache_.erase ( it++ );
 		count--;
 	}
 	return count == 0;
 }
-void FileManager::register_fileio ( const FileFabric &file_manager )
+void FileManager::register_fileio ( FileFabric *file_manager )
 {
 	_file_fabricks_.push_back ( file_manager );
 }
@@ -108,7 +109,7 @@ class PosixFile : public File
 		void *_mapped_address_;
 };
 
-File* CreatePosixFile ( const std::string &filename, READ_MODE mode )
+File* CreatePosixFile::operator() ( const std::string &filename, READ_MODE mode )
 {
 	int fdesc;
 	switch ( mode )
