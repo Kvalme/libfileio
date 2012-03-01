@@ -29,7 +29,7 @@ int main ( int argc, char *argv[] )
 		std::cout << "Testing cached opening:" << std::endl;
 		for ( int a = 0;a < 2;a++ )
 		{
-			FileIO::File* f = manager.open ( argv[1] );
+			manager.open ( argv[1] );
 		}
 
 		std::cout << "Testing file write:" << std::endl;
@@ -39,7 +39,7 @@ int main ( int argc, char *argv[] )
 		std::cout << "Testing cached opening:" << std::endl;
 		for ( int a = 0;a < 2;a++ )
 		{
-			FileIO::File* f = manager.open ( argv[1] );
+			manager.open ( argv[1] );
 		}
 	}
 	catch ( FileIO::FileIOError error )
