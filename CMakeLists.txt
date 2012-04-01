@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 2.6)
 
 project(libfileio CXX)
 
+set(CMAKE_CXX_FLAGS -std=c++0x)
+
 include_directories(src)
 
 set(libfileio_SOURCES src/fileio.cpp)

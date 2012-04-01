@@ -24,6 +24,7 @@
 #include <map>
 #include <stdint.h>
 #include <functional>
+#include <memory>
 
 namespace FileIO
 {
@@ -61,6 +62,7 @@ enum FILEIO_ERROR_CODE
 	MAP_ERROR
 };
 class File;
+typedef std::shared_ptr<File> FilePtr;
 class FileFabric
 {
   public:
@@ -98,7 +100,7 @@ class FileManager
 		 * @return pointer to the opened file. Object should be deleted on caller side
 		 * @author Denis A. Biryukov
 		 */
-		File* open ( const std::string &filename, READ_MODE mode = READ_ONLY, CACHE_MODE cache = CACHE );
+		FilePtr open ( const std::string &filename, READ_MODE mode = READ_ONLY, CACHE_MODE cache = CACHE );
 		/**
 		 * Removing 'count' files from cache
 		 * @param count count of files that needs to be removed from cache. By default this function purge cache.
@@ -112,7 +114,7 @@ class FileManager
 		void register_fileio ( FileFabric *file_manager );
 	private:
 		std::vector<FileFabric*> _file_fabricks_;
-		std::map<std::string, File*> _file_cache_;
+		std::map<std::string, FilePtr> _file_cache_;
 		unsigned int _cache_size_;
 };
 

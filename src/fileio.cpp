@@ -52,11 +52,11 @@ FileManager::~FileManager()
 	_file_cache_.clear();
 }
 
-File* FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MODE cache )
+FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MODE cache )
 {
 	File *file;
 	//Check cache
-	std::map<std::string, File*>::iterator cached_file = _file_cache_.find ( filename );
+	std::map<std::string, FilePtr>::iterator cached_file = _file_cache_.find ( filename );
 	if ( cached_file != _file_cache_.end() )
 	{
 		cached_file->second->reset();
@@ -68,7 +68,7 @@ File* FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MO
 		file = (*it)->operator()( filename, mode );
 		if ( file )
 		{
-			File* fileptr ( file );
+			FilePtr fileptr ( file );
 			if ( cache == CACHE && _file_cache_.find ( filename ) == _file_cache_.end() )
 			{
 				if(_file_cache_.size() < _cache_size_)_file_cache_.insert ( std::make_pair ( filename, fileptr ) );
@@ -78,12 +78,12 @@ File* FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_MO
 		}
 	}
 	THROW ( "Unable ot open file " + filename, NO_SUCH_FILE );
-	return 0;
+	return FilePtr ( ( File* ) 0 );
 }
 bool FileManager::clean ( int count )
 {
 	count = ( count == -1 ) ? _file_cache_.size() : count;
-	for ( std::map<std::string, File*>::iterator it = _file_cache_.begin(); it != _file_cache_.end(); )
+	for ( auto it = _file_cache_.begin(); it != _file_cache_.end(); )
 	{
 		_file_cache_.erase ( it++ );
 		count--;

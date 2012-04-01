@@ -12,7 +12,7 @@ int main ( int argc, char *argv[] )
 		FileIO::FileManager manager ( 1 );
 		manager.register_fileio ( new FileIO::CreatePosixFile );
 
-		FileIO::File* file = manager.open ( argv[1] );
+		FileIO::FilePtr file = manager.open ( argv[1] );
 
 		std::cout << "Testing read:" << std::endl;
 		char *buf = new char[file->get_file_size() +1];
@@ -33,7 +33,7 @@ int main ( int argc, char *argv[] )
 		}
 
 		std::cout << "Testing file write:" << std::endl;
-		FileIO::File* wfile = manager.open ( argv[2], FileIO::WRITE_ONLY );
+		FileIO::FilePtr wfile = manager.open ( argv[2], FileIO::WRITE_ONLY );
 		wfile->write ( buf, file->get_file_size() );
 
 		std::cout << "Testing cached opening:" << std::endl;
