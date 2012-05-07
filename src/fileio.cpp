@@ -161,6 +161,7 @@ void PosixFile::seek ( int64_t position, FILE_POSITION whence )
 			iwhence = SEEK_END;
 			break;
 		case POS_SET:
+		default:
 			iwhence = SEEK_SET;
 			break;
 	}
