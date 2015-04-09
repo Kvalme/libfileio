@@ -1,0 +1,4 @@
+09-Apr-2015:
++ Add posix file support as standalone part of library
++ Add initial support for directory listing
+- Remove autotools support
