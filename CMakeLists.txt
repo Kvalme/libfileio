@@ -1,10 +1,6 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.8)
 
 project(libfileio CXX)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
-include_directories(src)
 
 option(FILEIO_ENABLE_POSIX "Enable build of posix file interface" ON)
 
@@ -19,6 +15,11 @@ endif()
 add_library(fileio SHARED ${libfileio_SOURCES})
 add_library(fileio-static STATIC ${libfileio_SOURCES})
 
+target_compile_features(fileio PRIVATE cxx_std_11)
+target_compile_features(fileio-static PRIVATE cxx_std_11)
+target_include_directories(fileio PUBLIC ${libfileio_SOURCE_DIR}/src)
+target_include_directories(fileio-static PUBLIC ${libfileio_SOURCE_DIR}/src)
+
 SET_TARGET_PROPERTIES(fileio-static PROPERTIES OUTPUT_NAME "fileio")
 SET_TARGET_PROPERTIES(fileio-static PROPERTIES PREFIX "lib")
 SET_TARGET_PROPERTIES(fileio PROPERTIES PUBLIC_HEADER "${libfileio_HEADERS}")
@@ -27,3 +28,4 @@ install( TARGETS fileio fileio-static LIBRARY DESTINATION lib ARCHIVE DESTINATIO
 
 add_executable(fileio_tests tests/fileio_test.cpp)
 target_link_libraries(fileio_tests fileio)
+target_compile_features(fileio_tests PRIVATE cxx_std_11)
