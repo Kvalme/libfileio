@@ -33,11 +33,11 @@ using namespace FileIO;
 class PosixFile : public File
 {
 	public:
-		int read(void *buf, int size);
-		int write(const void *buf, int size);
-		void seek(int64_t position, FILE_POSITION whence = POS_CUR );
-		void reset();
-		void *mmap();
+		int read(void *buf, std::size_t size) override;
+		int write(const void *buf, std::size_t size) override;
+		void seek(int64_t position, FILE_POSITION whence = POS_CUR) override;
+		void reset() override;
+		void *mmap() override;
 		~PosixFile();
 		PosixFile(const std::string &filename, READ_MODE mode, int fdesc);
 	protected:
@@ -69,7 +69,7 @@ File *PosixFileFabric::operator()(const std::string &fname, READ_MODE mode)
 	return 0;
 }
 
-int PosixFile::read(void *buf, int size)
+int PosixFile::read(void *buf, std::size_t size)
 {
 	if (_fdesc_ < 0) THROW("Invalid file descriptor!", INVALID_FILE);
 	if (_file_mode_ == WRITE_ONLY) THROW("Read attemption for write-only file", READ_ON_WRITE);
@@ -77,7 +77,7 @@ int PosixFile::read(void *buf, int size)
 	if (readed == 0) THROW("Read from " + _filename_ + ": " + strerror(errno), READ_ERROR);
 	return readed;
 }
-int PosixFile::write(const void *buf, int size)
+int PosixFile::write(const void *buf, std::size_t size)
 {
 	if (_fdesc_ < 0) THROW("Invalid file descriptor!", INVALID_FILE);
 	if (_file_mode_ == READ_ONLY) THROW("Write attemption for read-only file", WRITE_ON_READ);

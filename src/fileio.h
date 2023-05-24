@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <stdint.h>
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -75,6 +75,7 @@ class FileFabric
 	public:
 		virtual File *operator()(const std::string &fname, READ_MODE mode) = 0;
 		virtual bool ListDir(const std::string &path, std::vector<std::string> *subdirs, std::vector<std::string> *files) = 0;
+		virtual ~FileFabric() = default;
 };
 class FileIOError
 {
@@ -143,14 +144,14 @@ class File
 		 * @param size amout of data to read. In bytes
 		 * @return amount of bytes actually read
 		 */
-		virtual int read(void *buf, int size) = 0;
+		virtual int read(void *buf, std::size_t size) = 0;
 		/**
 		 * Writes data to file
 		 * @param buf buffer with data that needs to be written
 		 * @param size amount of data to write.In bytes
 		 * @return amount of bites actually written
 		 */
-		virtual int write(const void *buf, int size) = 0;
+		virtual int write(const void *buf, std::size_t size) = 0;
 		/**
 		 * Seeks in file for 'position' bites starting from 'whence'
 		 * @param position amount of bites to move
@@ -170,7 +171,7 @@ class File
 		 * Returns file size
 		 * @return file size
 		 */
-		virtual uint64_t get_file_size() const
+		virtual std::size_t get_file_size() const
 		{
 			return _file_size_;
 		}
@@ -180,7 +181,7 @@ class File
 		File(const std::string &filename, READ_MODE mode) : _filename_(filename), _file_mode_(mode), _file_size_(0) {};
 		std::string _filename_;
 		READ_MODE _file_mode_;
-		uint64_t _file_size_;
+		std::size_t _file_size_;
 };
 
 } //namespace FileIO
