@@ -77,22 +77,28 @@ class FileFabric
 		virtual bool ListDir(const std::string &path, std::vector<std::string> *subdirs, std::vector<std::string> *files) = 0;
 		virtual ~FileFabric() = default;
 };
-class FileIOError
+class FileIOError : public std::exception
 {
 	public:
-		FileIOError(std::string reason, FILEIO_ERROR_CODE code) : _reason_(reason), _error_code_(code) {}
+		FileIOError(std::string reason, FILEIO_ERROR_CODE code) : _reason_(reason), _error_code_(code)
+		{
+			_error_text_ = std::string("[FileIO] error_code: ") + std::to_string(_error_code_) + " reason: \"" + _reason_.c_str() + "\"";
+		}
 		~FileIOError() {}
+
 		FILEIO_ERROR_CODE get_error_code() const
 		{
 			return _error_code_;
 		}
-		const char *what() const
+
+		const char *what() const noexcept override
 		{
-			return _reason_.c_str();
+			return _error_text_.c_str();
 		}
 	private:
 		std::string _reason_;
 		FILEIO_ERROR_CODE _error_code_;
+		std::string _error_text_;
 };
 
 class FileManager
