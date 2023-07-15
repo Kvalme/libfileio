@@ -35,7 +35,7 @@ FileManager::FileManager ( unsigned int cache_size ) : _cache_size_ ( cache_size
 }
 FileManager::~FileManager()
 {
-	_file_fabricks_.clear();
+	_file_factories_.clear();
 	_file_cache_.clear();
 }
 
@@ -49,8 +49,8 @@ FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_
 		cached_file->second->reset();
 		return cached_file->second;
 	}
-	if ( _file_fabricks_.empty() ) THROW ( "No file fabricks installed", NO_FABRICKS );
-	for ( std::vector<FileFabric*>::iterator it = _file_fabricks_.begin(); it != _file_fabricks_.end(); ++it )
+	if (_file_factories_.empty() ) THROW ( "No file factories registered", NO_FACTORIES);
+	for (std::vector<FileFaсtory*>::iterator it = _file_factories_.begin(); it != _file_factories_.end(); ++it)
 	{
 		file = (*it)->operator()( filename, mode );
 		if ( file )
@@ -77,15 +77,15 @@ bool FileManager::clean ( int count )
 	}
 	return count == 0;
 }
-void FileManager::register_fileio ( FileFabric *file_manager )
+void FileManager::register_fileio ( FileFaсtory *file_manager )
 {
-	_file_fabricks_.push_back ( file_manager );
+	_file_factories_.push_back ( file_manager );
 }
 
 void FileManager::ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files)
 {
-	if ( _file_fabricks_.empty() ) THROW ( "No file fabricks installed", NO_FABRICKS );
-	for ( std::vector<FileFabric*>::iterator it = _file_fabricks_.begin(); it != _file_fabricks_.end(); ++it )
+	if ( _file_factories_.empty() ) THROW ( "No file fabricks installed", NO_FACTORIES );
+	for ( std::vector<FileFaсtory*>::iterator it = _file_factories_.begin(); it != _file_factories_.end(); ++it )
 	{
 		if ((*it)->ListDir(path, subdirs, files)) return;
 	}

@@ -56,7 +56,7 @@ enum FILE_POSITION
 };
 enum FILEIO_ERROR_CODE
 {
-	NO_FABRICKS,
+	NO_FACTORIES,
 	NO_SUCH_FILE,
 	INVALID_FILE,
 	READ_ERROR,
@@ -70,12 +70,12 @@ enum FILEIO_ERROR_CODE
 };
 class File;
 typedef std::shared_ptr<File> FilePtr;
-class FileFabric
+class FileFaсtory
 {
 	public:
 		virtual File *operator()(const std::string &fname, READ_MODE mode) = 0;
 		virtual bool ListDir(const std::string &path, std::vector<std::string> *subdirs, std::vector<std::string> *files) = 0;
-		virtual ~FileFabric() = default;
+		virtual ~FileFaсtory() = default;
 };
 class FileIOError : public std::exception
 {
@@ -126,7 +126,7 @@ class FileManager
 		 * Register a fileio module
 		 * @param file_manager fileio module fabrick
 		 */
-		void register_fileio(FileFabric *file_manager);
+		void register_fileio(FileFaсtory *file_manager);
 		/**
 		 * Lists files and subdirectoryes in specified path
 		 * If path not exist or can not be opened exception will be rised with ERROR_CODE set to PATH_NOT_FOUND
@@ -136,7 +136,7 @@ class FileManager
 		 */
 		void ListDir(const std::string &path, std::vector<std::string> *subdirs, std::vector<std::string> *files);
 	private:
-		std::vector<FileFabric *> _file_fabricks_;
+		std::vector<FileFaсtory *> _file_factories_;
 		std::map<std::string, FilePtr> _file_cache_;
 		unsigned int _cache_size_;
 };

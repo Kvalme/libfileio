@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <filesystem>
 
 #ifndef WIN32
 	#include <sys/mman.h>
@@ -30,6 +31,8 @@ using namespace FileIO;
 
 #define THROW(reason, code) throw(FileIOError(reason, code))
 
+namespace fs = std::filesystem;
+
 class PosixFile : public File
 {
 	public:
@@ -39,33 +42,51 @@ class PosixFile : public File
 		void reset() override;
 		void *mmap() override;
 		~PosixFile();
-		PosixFile(const std::string &filename, READ_MODE mode, int fdesc);
+		PosixFile(const fs::path &filename, READ_MODE mode, int fdesc);
 	protected:
 		int _fdesc_;
 		void *_mapped_address_;
 };
 
-File *PosixFileFabric::operator()(const std::string &fname, READ_MODE mode)
+FileIO::PosixFileFaсtory::PosixFileFaсtory(const std::vector<std::filesystem::path> &base_paths) :
+	base_paths_(base_paths)
 {
+
+}
+
+File *PosixFileFaсtory::operator()(const std::string &fname, READ_MODE mode)
+{
+	// Choose correct path
+	fs::path selected_path;
+	for (auto &path : base_paths_)
+	{
+		if (fs::exists(path / fname))
+		{
+			selected_path = path / fname;
+			break;
+		}
+	}
+
 	int fdesc;
 	switch (mode)
 	{
 		case READ_ONLY:
-			fdesc = ::open(fname.c_str(), O_RDONLY);
+			fdesc = ::open(selected_path.c_str(), O_RDONLY);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case WRITE_ONLY:
-			fdesc = ::creat(fname.c_str(), 0666);
+			fdesc = ::creat(selected_path.c_str(), 0666);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case READ_WRITE:
-			fdesc = ::open(fname.c_str(), O_RDWR);
+			fdesc = ::open(selected_path.c_str(), O_RDWR);
 			if (fdesc < 0) return 0;
-			else return new PosixFile(fname, mode, fdesc);
+			else return new PosixFile(selected_path, mode, fdesc);
 			break;
 	}
+
 	return 0;
 }
 
@@ -125,7 +146,7 @@ PosixFile::~PosixFile()
 	if (_mapped_address_)munmap(_mapped_address_, _file_size_);
 	if (_fdesc_ >= 0) ::close(_fdesc_);
 }
-PosixFile::PosixFile(const std::string &filename, READ_MODE mode, int fdesc) : File(filename, mode), _fdesc_(fdesc), _mapped_address_(0)
+PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File(filename, mode), _fdesc_(fdesc), _mapped_address_(0)
 {
 	if (mode != WRITE_ONLY)
 	{
@@ -135,7 +156,7 @@ PosixFile::PosixFile(const std::string &filename, READ_MODE mode, int fdesc) : F
 	}
 }
 
-bool PosixFileFabric::ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files)
+bool PosixFileFaсtory::ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files)
 {
 	DIR *dir = opendir(path.c_str());
 	if (!dir) return false;

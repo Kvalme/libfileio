@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 		FileIO::FileManager manager(1);
-		manager.register_fileio(new FileIO::PosixFileFabric);
+		manager.register_fileio(new FileIO::PosixFileFaсtory({"./"}));
 
 		FileIO::FilePtr file = manager.open(argv[1]);
 
