@@ -10,10 +10,10 @@
 namespace FileIO
 {
 
-class PosixFileFaсtory : public FileFaсtory
+class PosixFileFactory : public FileFactory
 {
 	public:
-		explicit PosixFileFaсtory(const std::vector<std::filesystem::path> &base_paths);
+		explicit PosixFileFactory(const std::vector<std::filesystem::path> &base_paths);
 		virtual File *operator()(const std::string &fname, READ_MODE mode);
 		virtual bool ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files);
 
