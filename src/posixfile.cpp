@@ -48,13 +48,13 @@ class PosixFile : public File
 		void *_mapped_address_;
 };
 
-FileIO::PosixFileFaсtory::PosixFileFaсtory(const std::vector<std::filesystem::path> &base_paths) :
+FileIO::PosixFileFactory::PosixFileFactory(const std::vector<std::filesystem::path> &base_paths) :
 	base_paths_(base_paths)
 {
 
 }
 
-File *PosixFileFaсtory::operator()(const std::string &fname, READ_MODE mode)
+File *PosixFileFactory::operator()(const std::string &fname, READ_MODE mode)
 {
 	// Choose correct path
 	fs::path selected_path;
@@ -156,7 +156,7 @@ PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File
 	}
 }
 
-bool PosixFileFaсtory::ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files)
+bool PosixFileFactory::ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files)
 {
 	DIR *dir = opendir(path.c_str());
 	if (!dir) return false;
