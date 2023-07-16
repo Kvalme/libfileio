@@ -8,16 +8,17 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <unistd.h>
 #include <string.h>
 #include <filesystem>
 
 #ifndef WIN32
 	#include <sys/mman.h>
+	#include <unistd.h>
 #include <dirent.h>
 #else
 	#include <windows.h>
 	#include <sys/stat.h>
+	#include <io.h>
 	void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 	int munmap(void *start, size_t length);
 	#define MAP_PRIVATE 1
@@ -71,17 +72,17 @@ File *PosixFileFactory::operator()(const std::string &fname, READ_MODE mode)
 	switch (mode)
 	{
 		case READ_ONLY:
-			fdesc = ::open(selected_path.c_str(), O_RDONLY);
+			fdesc = ::open(selected_path.u8string().c_str(), O_RDONLY);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case WRITE_ONLY:
-			fdesc = ::creat(selected_path.c_str(), 0666);
+			fdesc = ::creat(selected_path.u8string().c_str(), 0666);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case READ_WRITE:
-			fdesc = ::open(selected_path.c_str(), O_RDWR);
+			fdesc = ::open(selected_path.u8string().c_str(), O_RDWR);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(selected_path, mode, fdesc);
 			break;
@@ -94,7 +95,7 @@ int PosixFile::read(void *buf, std::size_t size)
 {
 	if (_fdesc_ < 0) THROW("Invalid file descriptor!", INVALID_FILE);
 	if (_file_mode_ == WRITE_ONLY) THROW("Read attemption for write-only file", READ_ON_WRITE);
-	ssize_t readed = ::read(_fdesc_ , buf, size);
+	auto readed = ::read(_fdesc_ , buf, size);
 	if (readed == 0) THROW("Read from " + _filename_ + ": " + strerror(errno), READ_ERROR);
 	return readed;
 }
@@ -102,7 +103,7 @@ int PosixFile::write(const void *buf, std::size_t size)
 {
 	if (_fdesc_ < 0) THROW("Invalid file descriptor!", INVALID_FILE);
 	if (_file_mode_ == READ_ONLY) THROW("Write attemption for read-only file", WRITE_ON_READ);
-	ssize_t written = ::write(_fdesc_ , buf, size);
+	auto written = ::write(_fdesc_ , buf, size);
 	if (written == 0) THROW("Write to " + _filename_ + ": " + strerror(errno), WRITE_ERROR);
 	return written;
 }
@@ -146,7 +147,7 @@ PosixFile::~PosixFile()
 	if (_mapped_address_)munmap(_mapped_address_, _file_size_);
 	if (_fdesc_ >= 0) ::close(_fdesc_);
 }
-PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File(filename, mode), _fdesc_(fdesc), _mapped_address_(0)
+PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File(filename.u8string(), mode), _fdesc_(fdesc), _mapped_address_(0)
 {
 	if (mode != WRITE_ONLY)
 	{
@@ -158,6 +159,7 @@ PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File
 
 bool PosixFileFactory::ListDir(const std::string &path, std::vector< std::string > *subdirs, std::vector< std::string > *files)
 {
+#ifndef WIN32
 	DIR *dir = opendir(path.c_str());
 	if (!dir) return false;
 
@@ -169,6 +171,7 @@ bool PosixFileFactory::ListDir(const std::string &path, std::vector< std::string
 		else if(S_ISREG(statBuf.st_mode) || S_ISLNK(statBuf.st_mode)) files->push_back(dirEntry->d_name);
 	}
 	closedir(dir);
+#endif
 
 	return true;
 }
