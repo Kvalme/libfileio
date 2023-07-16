@@ -11,10 +11,10 @@
 #include <string.h>
 #include <filesystem>
 
-#ifndef WIN32
+#if !defined(_WIN64) || !defined(_WIN32)
 	#include <sys/mman.h>
 	#include <unistd.h>
-#include <dirent.h>
+	#include <dirent.h>
 #else
 	#include <windows.h>
 	#include <sys/stat.h>
