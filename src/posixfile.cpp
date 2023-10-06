@@ -77,12 +77,12 @@ File *PosixFileFactory::operator()(const std::string &fname, READ_MODE mode)
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case WRITE_ONLY:
-			fdesc = ::creat(selected_path.u8string().c_str(), 0666);
+			fdesc = ::creat(selected_path.empty() ? fname.c_str() : selected_path.u8string().c_str(), 0666);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case READ_WRITE:
-			fdesc = ::open(selected_path.u8string().c_str(), O_RDWR);
+			fdesc = ::open(selected_path.empty() ? fname.c_str() : selected_path.u8string().c_str(), O_RDWR);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(selected_path, mode, fdesc);
 			break;
