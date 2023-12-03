@@ -135,6 +135,7 @@ class FileManager
 		 * @param files poiner to place where found files should be stored
 		 */
 		void ListDir(const std::string &path, std::vector<std::string> *subdirs, std::vector<std::string> *files);
+		bool Exists(const std::string &filename);
 	private:
 		std::vector<FileFactory *> _file_factories_;
 		std::map<std::string, FilePtr> _file_cache_;

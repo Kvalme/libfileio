@@ -67,6 +67,20 @@ FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_
 	THROW ( "Unable ot open file " + filename, NO_SUCH_FILE );
 	return FilePtr ( ( File* ) 0 );
 }
+
+bool FileManager::Exists(const std::string &filename)
+{
+	try
+	{
+		auto f = open(filename, READ_ONLY, CACHE);
+		return f != nullptr;
+	}
+	catch(FileIOError&)
+	{
+		return false;
+	}
+}
+
 bool FileManager::clean ( int count )
 {
 	count = ( count == -1 ) ? _file_cache_.size() : count;
