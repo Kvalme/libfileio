@@ -147,7 +147,7 @@ class File
 	public:
 		/**
 		 * Reads data from file
-		 * @param buf buffer for data
+		 * @param buf buffer for datav
 		 * @param size amout of data to read. In bytes
 		 * @return amount of bytes actually read
 		 */

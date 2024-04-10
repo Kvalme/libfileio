@@ -44,22 +44,25 @@ FilePtr FileManager::open ( const std::string &filename, READ_MODE mode , CACHE_
 	File *file;
 	//Check cache
 	std::map<std::string, FilePtr>::iterator cached_file = _file_cache_.find ( filename );
-	if ( cached_file != _file_cache_.end() )
+	if ((cached_file != _file_cache_.end()) && (cache == CACHE))
 	{
 		cached_file->second->reset();
 		return cached_file->second;
 	}
+
 	if (_file_factories_.empty() ) THROW ( "No file factories registered", NO_FACTORIES);
 	for (std::vector<FileFactory*>::iterator it = _file_factories_.begin(); it != _file_factories_.end(); ++it)
 	{
 		file = (*it)->operator()( filename, mode );
-		if ( file )
+		if (file)
 		{
 			FilePtr fileptr ( file );
-			if ( cache == CACHE && _file_cache_.find ( filename ) == _file_cache_.end() )
+			if ((cache == CACHE) && (_file_cache_.find ( filename ) == _file_cache_.end()))
 			{
-				if(_file_cache_.size() < _cache_size_)_file_cache_.insert ( std::make_pair ( filename, fileptr ) );
-				else if(clean(1))_file_cache_.insert ( std::make_pair ( filename, fileptr ) );
+				if(_file_cache_.size() < _cache_size_)
+					_file_cache_.insert ( std::make_pair ( filename, fileptr ) );
+				else if(clean(1))
+					_file_cache_.insert ( std::make_pair ( filename, fileptr ) );
 			}
 			return fileptr;
 		}
