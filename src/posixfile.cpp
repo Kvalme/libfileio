@@ -61,7 +61,12 @@ File *PosixFileFactory::operator()(const std::string &fname, READ_MODE mode)
 	fs::path selected_path;
 	for (auto &path : base_paths_)
 	{
-		if (fs::exists(path / fname))
+		if (fs::exists(path / fname) && (mode == READ_ONLY))
+		{
+			selected_path = path / fname;
+			break;
+		}
+		else if (fs::exists(path) && (mode != READ_ONLY))
 		{
 			selected_path = path / fname;
 			break;
