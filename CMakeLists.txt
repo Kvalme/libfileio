@@ -12,6 +12,12 @@ if (FILEIO_ENABLE_POSIX)
 	list(APPEND libfileio_HEADERS "src/posixfile.h")
 endif()
 
+if (WIN32)
+	list(APPEND libfileio_SOURCES "src/location_win32.cpp")
+else()
+	list(APPEND libfileio_SOURCES "src/location_linux.cpp")
+endif()
+
 add_library(fileio STATIC ${libfileio_SOURCES})
 add_library(fileio-static STATIC ${libfileio_SOURCES})
 
@@ -32,3 +38,7 @@ install( TARGETS fileio fileio-static LIBRARY DESTINATION lib ARCHIVE DESTINATIO
 add_executable(fileio_tests tests/fileio_test.cpp)
 target_link_libraries(fileio_tests fileio)
 target_compile_features(fileio_tests PRIVATE cxx_std_17)
+
+add_executable(fileio_location_tests tests/fileio_location_test.cpp)
+target_link_libraries(fileio_location_tests fileio)
+target_compile_features(fileio_location_tests PRIVATE cxx_std_17)
