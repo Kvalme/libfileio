@@ -26,6 +26,8 @@
 
 #include "fileio.h"
 
+#include <filesystem>
+
 namespace FileIO
 {
 #define THROW(reason, code) throw(FileIOError(reason, code))

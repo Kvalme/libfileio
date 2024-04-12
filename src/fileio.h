@@ -31,6 +31,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <filesystem>
 
 namespace FileIO
 {
@@ -190,5 +191,11 @@ class File
 		READ_MODE _file_mode_;
 		std::size_t _file_size_;
 };
+
+namespace Location
+{
+	std::filesystem::path GetExecutablePath();
+	std::filesystem::path GetSaveGameFolder();
+}
 
 } //namespace FileIO
