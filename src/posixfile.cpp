@@ -77,17 +77,17 @@ File *PosixFileFactory::operator()(const std::string &fname, READ_MODE mode)
 	switch (mode)
 	{
 		case READ_ONLY:
-			fdesc = ::open(selected_path.u8string().c_str(), O_RDONLY);
+			fdesc = ::open(selected_path.string().c_str(), O_RDONLY);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case WRITE_ONLY:
-			fdesc = ::creat(selected_path.empty() ? fname.c_str() : selected_path.u8string().c_str(), 0666);
+			fdesc = ::creat(selected_path.empty() ? fname.c_str() : selected_path.string().c_str(), 0666);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(fname, mode, fdesc);
 			break;
 		case READ_WRITE:
-			fdesc = ::open(selected_path.empty() ? fname.c_str() : selected_path.u8string().c_str(), O_RDWR);
+			fdesc = ::open(selected_path.empty() ? fname.c_str() : selected_path.string().c_str(), O_RDWR);
 			if (fdesc < 0) return 0;
 			else return new PosixFile(selected_path, mode, fdesc);
 			break;
@@ -152,7 +152,7 @@ PosixFile::~PosixFile()
 	if (_mapped_address_)munmap(_mapped_address_, _file_size_);
 	if (_fdesc_ >= 0) ::close(_fdesc_);
 }
-PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File(filename.u8string(), mode), _fdesc_(fdesc), _mapped_address_(0)
+PosixFile::PosixFile(const fs::path &filename, READ_MODE mode, int fdesc) : File(filename.string(), mode), _fdesc_(fdesc), _mapped_address_(0)
 {
 	if (mode != WRITE_ONLY)
 	{
